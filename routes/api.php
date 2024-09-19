@@ -19,4 +19,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::resource('hangman', HangmanController::class);
+Route::post('jugar', [HangmanController::class, 'jugar']);
+Route::post('jugar/adivinar', [HangmanController::class, 'adivinar']);

@@ -3,82 +3,76 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class HangmanController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function jugar()
     {
-        //
+        $palabras = ["perro", "gato", "oso", "loro", "rata"];
+        $palabra = $palabras[array_rand($palabras)];
+
+        $acertadas = array_fill(0, strlen($palabra), '_');
+
+        $intentos = 5;
+
+        return response()->json([
+            "prueba" => str_repeat('-', strlen($palabra)),
+            "intentos" => $intentos
+        ], 200)
+            ->cookie('palabra', $palabra)
+            ->cookie('intentos', $intentos)
+            ->cookie('acertadas', $acertadas);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function adivinar(Request $request)
     {
-        //
-    }
+        $palabra = $request->cookie('palabra');
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $longitud = strlen($palabra);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
+        $acertadas = $request->cookie('acertadas');
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
+        $intentos = $request->cookie('intentos');
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
+        $encontrada = false;
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        $validated = Validator::make($request->all(), [
+            "letra" => "string|max:1",
+        ]);
+
+        $letra = $request->letra;
+
+        if ($validated->fails()) {
+            return response()->json([
+                'error' => $validated->errors(),
+            ], 400);
+        }
+
+        for ($i = 0; $i < $longitud; $i++) {
+            if ($letra == $palabra[$i]) {
+                $acertadas[$i] = $letra;
+                $encontrada = true;
+            }
+        }
+
+        if (!$encontrada) {
+            $intentos--;
+        }
+
+        if ($intentos <= 0) {
+            return response()->json([
+                "fin del juego" => "Has perdido",
+                "palabra" => $palabra
+            ])
+            ->cookie('palabra', $palabra)
+            ->cookie('acertadas', $acertadas)
+            ->cookie('intentos', $intentos);
+        };
+
+        return response()->json([
+            "palabra" => $acertadas,
+            "intentos" => $intentos,
+        ]);
     }
 }
