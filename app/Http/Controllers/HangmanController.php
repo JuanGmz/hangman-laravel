@@ -12,30 +12,26 @@ class HangmanController extends Controller
         $palabras = ["perro", "gato", "oso", "loro", "rata"];
         $palabra = $palabras[array_rand($palabras)];
 
-        $acertadas = array_fill(0, strlen($palabra), '_');
-
         $intentos = 5;
 
         return response()->json([
             "prueba" => str_repeat('-', strlen($palabra)),
-            "intentos" => $intentos
+            "intentos" => $intentos,
+            "mensaje" => "El juego ha comenzado",
         ], 200)
             ->cookie('palabra', $palabra)
             ->cookie('intentos', $intentos)
-            ->cookie('acertadas', $acertadas);
+            ->cookie('acertadas', json_encode([]));
     }
 
     public function adivinar(Request $request)
     {
         $palabra = $request->cookie('palabra');
 
-        $longitud = strlen($palabra);
 
-        $acertadas = $request->cookie('acertadas');
+        $acertadas = json_decode($request->cookie('acertadas', []), true);
 
         $intentos = $request->cookie('intentos');
-
-        $encontrada = false;
 
         $validated = Validator::make($request->all(), [
             "letra" => "string|max:1",
@@ -49,14 +45,15 @@ class HangmanController extends Controller
             ], 400);
         }
 
-        for ($i = 0; $i < $longitud; $i++) {
-            if ($letra == $palabra[$i]) {
-                $acertadas[$i] = $letra;
-                $encontrada = true;
-            }
+        if (in_array($letra, $acertadas)) {
+            return response()->json([
+                "error" => "Ya has acertado esta letra",
+            ], 400);
         }
 
-        if (!$encontrada) {
+        $acertadas[] = $letra;
+
+        if (!in_array($letra, $palabra)) {
             $intentos--;
         }
 
@@ -65,10 +62,11 @@ class HangmanController extends Controller
                 "fin del juego" => "Has perdido",
                 "palabra" => $palabra
             ])
-            ->cookie('palabra', $palabra)
-            ->cookie('acertadas', $acertadas)
-            ->cookie('intentos', $intentos);
-        };
+                ->cookie('palabra', $palabra)
+                ->cookie('acertadas', $acertadas)
+                ->cookie('intentos', $intentos);
+        }
+        ;
 
         return response()->json([
             "palabra" => $acertadas,
