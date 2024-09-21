@@ -42,6 +42,8 @@ class HangmanController extends Controller
         // Obtener la letra
         $letra = $request->letra;
 
+        return $letra;
+
         // Si el validador falla mostrar mensaje de error
         if ($validator->fails()) {
             return response()->json([
