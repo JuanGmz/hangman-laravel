@@ -4,20 +4,9 @@ use App\Http\Controllers\HangmanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
-
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('hangman', [HangmanController::class, 'hangman']);
-Route::post('hangman/empezar', [HangmanController::class,'empezar']);
+Route::post('hangman/{indice}/{jugar?}', [HangmanController::class, 'palabra'])
+->where('palabra', '[0-9]+');
